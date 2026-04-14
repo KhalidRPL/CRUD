@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portofolio CRUD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background: linear-gradient(135deg, #1e1e2f, #2a2a40); color: white; min-height: 100vh; }
+
+    header { text-align: center; padding: 20px; font-size: 2rem; font-weight: bold; }
+    .container { width: 90%; max-width: 900px; margin: auto; }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    .btn-add { background: #4CAF50; color: white; }
+    .btn-edit { background: #2196F3; color: white; }
+    .btn-delete { background: #f44336; color: white; }
+
+    .portfolio-item img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>Portofolio Saya</header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Tambah / Edit Proyek</h2>
+      <input type="hidden" id="editIndex" />
+      <input type="text" id="title" placeholder="Judul Proyek" />
+      <textarea id="description" placeholder="Deskripsi Proyek"></textarea>
+      <input type="file" id="image" accept="image/*" />
+      <button class="btn-add" onclick="saveProject()">Simpan Proyek</button>
+    </div>
+
+    <div id="portfolioList"></div>
+  </div>
+
+  <script>
+    let projects = JSON.parse(localStorage.getItem('projects')) || [];
+
+    function renderProjects() {
+      const list = document.getElementById('portfolioList');
+      list.innerHTML = '';
+
+      projects.forEach((project, index) => {
+        const imgTag = project.image ? `<img src="${project.image}">` : '';
+
+        list.innerHTML += `
+          <div class="card portfolio-item">
+            ${imgTag}
+            <h3>${project.title}</h3>
+            <p>${project.description}</p>
+            <button class="btn-edit" onclick="editProject(${index})">Edit</button>
+            <button class="btn-delete" onclick="deleteProject(${index})">Hapus</button>
+          </div>
+        `;
+      });
+    }
+
+    function saveProject() {
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const imageInput = document.getElementById('image');
+      const editIndex = document.getElementById('editIndex').value;
+
+      if (!title || !description) {
+        alert('Harap isi semua field!');
+        return;
+      }
+
+      // kalau ada gambar
+      if (imageInput.files.length > 0) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          saveData(e.target.result);
+        };
+
+        reader.readAsDataURL(imageInput.files[0]);
+      } else {
+        saveData(null);
+      }
+
+      function saveData(imageData) {
+        const newProject = {
+          title: title,
+          description: description,
+          image: imageData
+        };
+
+        if (editIndex === '') {
+          projects.push(newProject);
+        } else {
+          // kalau tidak upload gambar baru, pakai gambar lama
+          if (!imageData) {
+            newProject.image = projects[editIndex].image;
+          }
+          projects[editIndex] = newProject;
+          document.getElementById('editIndex').value = '';
+        }
+
+        localStorage.setItem('projects', JSON.stringify(projects));
+        clearForm();
+        renderProjects();
+      }
+    }
+
+    function editProject(index) {
+      const project = projects[index];
+      document.getElementById('title').value = project.title;
+      document.getElementById('description').value = project.description;
+      document.getElementById('editIndex').value = index;
+    }
+
+    function deleteProject(index) {
+      if (confirm('Hapus proyek ini?')) {
+        projects.splice(index, 1);
+        localStorage.setItem('projects', JSON.stringify(projects));
+        renderProjects();
+      }
+    }
+
+    function clearForm() {
+      document.getElementById('title').value = '';
+      document.getElementById('description').value = '';
+      document.getElementById('image').value = '';
+    }
+
+    renderProjects();
+  </script>
+</body>
+</html>
